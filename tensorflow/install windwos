@@ -1,0 +1,24 @@
+1、安装
+    Windows:
+        Python3.5
+        pip install tensorflow==1.3.0
+
+        pip install numpy --upgrade
+
+        pip install matplotlib --upgrade
+
+        pip install jupyter --upgrade
+
+        pip install scikit-image --upgrade
+        pip install scikit-learn --upgrade
+
+        pip install librosa --upgrade
+
+        pip install keras --upgrade
+
+        pip install git+https://github.com/tflearn/tflearn.git
+
+        pip install nltk --upgrade
+            python下执行
+            import nltk
+            nltk.download()
