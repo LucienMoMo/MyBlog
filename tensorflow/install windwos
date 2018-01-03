@@ -1,3 +1,5 @@
+TensorFlow 
+
 1、安装
     Windows:
         Python3.5
@@ -22,3 +24,94 @@
             python下执行
             import nltk
             nltk.download()
+            
+2、术语
+    Tensor：张量，多维数组，在TensorFlow中，所有的数据都是通过张量的形式表现。
+    Flow：流，直观的表达了张量之间通过计算相互转化的过程。
+    
+3、基础知识
+    3.1 系统架构：
+        自底向上分为设备层、网络层、数据操作层、图计算层、API层、应用层，其中设备层、数据操作层、网络层、图计算层是TensofFlow的核心。
+        最下层的是网络通信和设备管理层，网络通信层包括gRPC（google Remote Procedure Call Protocol)和远程直接数据存取（Remote Direct Memory Access,RDMA)。设备管理层包括TensorFlow分别在CPU、GPU、FPGA等设备上的实现，也就是对上层提供了一个统一的接口，使得上层只需要处理卷积等逻辑，而不需要关心卷积在硬件上的实现过程。
+        其上是数据操作层，主要包括卷积函数，激活函数等操作。
+        再往上是图计算层，包括本地计算图和分布式计算图的实现。
+    3.2 设计理念：
+        将图的定义和图的运行完全分开，因此TensorFlow被认为是一个符号主义的库。编程模式通常分为命令式编程和符号式编程。命令式编程就是按照代码呈现的逻辑从上而下执行，而符号式编程涉及到很多的嵌入和优化，不容易理解和调试，但是运行速度较命令式编程有所提升。在现有的深度学习框架中，Torch是典型的命令式的，Caffe、MXNet采用两种变成模式混合使用的方法，而TensorFlow是完全的符号式编程。符号式编程一般是先定义各种变量，然后建立一个数据流图，在数据流图中规定各个变量之间的计算关系，最后对数据流图进行编译，但此时的数据流图还是空壳子，里面没有任何实际的数据，只有把需要计算的数据放入进去过后，才能在整个模型中形成数据流从而产生输出值。
+        TensorFlow中涉及到的运算都要放在图中，而图的运行时要发生在会话中。开启会话过后就可以用数据去填充节点进行运算，当会话关闭过后就不能进行运算了。
+    3.3 编程模型：
+        TensorFlow使用数据流图做计算的，因此我们需要先创建一个数据流图，图中包括输入、塑形、Relu层、Logit层、Softmax层、交叉熵、梯度、SGD训练等部分，是一个简单的回归模型。
+        它的计算过程首先从输入开始经过塑形后，一层一层进行前向传播运算。Relu层（隐藏层）里会有两个参数，学习两个参数Wsm和bsm。用softMax来计算结果中各个类别的概率。用交叉熵来度量两个概率分布（源样本的概率分布和输出结果的概率分布）之间的相似性。然后开始计算梯度，这里需要用的参数Wh1、bh1、Wsm和bsm，以及交叉熵后的结果。随后进入SGD训练，也就是反向传播过程，从上往下的计算每一层的参数，然后进行更新。也就是说，计算和更新的顺序为bsm、Wsm、bh1、Wh1。
+        
+        TensorFlow顾名思义就是张量的流动，TensorFlow的数据流图是由节点和边组成的有向无环图。数据流图中的边有两种连接方式，数据依赖和控制依赖。其中实线边代表数据依赖而虚线则代表控制依赖。TensorFlow中的节点又成为算子，它代表一个操作，一般用来表示施加的数学计算，也可以表示数据输入feed in的起点以及输出的终点push out，或者是读取或写入持久变量的终点。
+    3.4 常用API：
+        图、操作、张量
+        
+        
+        可视化
+        
+    3.5 变量作用域：
+        在TensorFlow中有两个重要的作用域，一个是name_scope，一个是variable_scope作用域，variable_scope主要是给variable_name加前缀，也可以给op_name加前缀；name_scope是给op_name加前缀。
+            3.5.1： variable_scope示例（variable_scope主要用在循环神经网络（RNN）的操作中，其中需要大量的共享变量）：
+                variable_scope变量作用域机制在TensorFlow中主要由两部分组成：
+                v = tf.get_variable(name, shape, dtype, initializer) # 通过所给的名字创建或
+                tf.variable_scope(<scope_name>) #为变量指定命名空间
+                当tf.get_variable_scope().reuse == False时，variable_scope作用域只能用来创建新变量
+            获取变量作用域：
+                可以直接通过tf.variable_scope()来获取变量作用域
+                如果在开启的一个变量作用域里使用之前预先定义的一个作用域，则会跳过当前变量的作用域，保持预先存在的作用域不变。 
+            变量作用域的初始化：
+                变量作用域可以默认携带一个初始化器，在这个作用域中的子作用域或变量都可以继承或者重写父作用域初始化器中的值。
+            3.5.2： name_scope示例：
+                name_scope会影响op_name，不会影响用get_variable()创建的变量但是会影响通过Variable()创建的变量。 
+    3.6 批准优化
+        3.6.1 方法
+            批准优化一般用在非线性映射（激活函数）之前，对x=Wu+b做规范化，使得结果的均值为0，方差为1。让每一层的输入都有一个稳定的分布会有利于网络的训练
+        3.6.2 优点
+            加大探索的步长，加快收敛的速度；
+            更容易跳出局部最小值；
+            破坏原有的数据分布在一定程度上缓解数据过拟合。
+     3.7 神经元函数及优化方法
+        3.7.1 激活函数
+            激活函数运行时激活神经网络的某一部分，将激活信息向后传入下一层神经网络。神经网络之所以能够解决非线性问题（图片、语音等）本质上就是激活函数加上了非线性的因素，弥补了线性模型的表达力，把“激活的神经元特征”通过函数保留并映射到下一层。
+            激活函数的选择
+                当输入数据特征相差明显，用tanh函数较好，且在循环过程中会不断扩大特征效果并显示出来。
+                当特征数据不明显时，选用sigmoid效果较好。同时，用sigmoid和tanh函数时，需要对输入进行规范化， 否则激活后的值全部进入平坦区，隐层的输出全部趋同，丧失原有的特征表达。而relu会好很多，有时可以不需要规范输入来避免上述情况。
+        3.7.2  卷积函数
+            卷积函数是构建神经网络的重要支架，是在一批图像上扫描的二维过滤器。
+        3.7.3 池化函数
+            在神经网络中，池化函数一般跟在卷积函数的下一层，它们和卷积函数一样被定义在tensorflow-1.1.0/ tensorflow/python/ops下的nn.py和gen_nn_ops.py文件中。池化操作是利用一个矩阵窗口在张量上进行扫描，将每个矩阵窗口中的值通过去最大或平均值的方式来减少元素的个数，每个池化操作的矩阵窗口大小是由ksize指定的，并且根据步长strides决定移动步长。
+        3.7.4 分类函数
+            TensorFlow中常见的分类函数主要有sigmoid_cross_entropy_with_logits、softmax、log_softmax、softmax_cross_entropy_with_logits等，它们也主要定义在tensorflow-1.1.0/tensorflow/python/ops的nn.py和nn_ops.py文件中。需要注意的是sigmoid_cross_entropy_with_logits函数作为损失函数时，在神经网络的最后一层不需要进行sigmoid运算。
+        3.7.5 优化方法
+            class tf.train.GradientDescentOptimizer
+            class tf.train.AdadeltaOptimizer
+            class tf.train.AdagradOptimizer
+            class tf.train.AdagradDAOptimizer
+            class tf.train.MomentumOptimizer
+            class tf.train.AdamOptimizer
+            class tf.train.FtrlOptimizer
+            class tf.train.RMSPropOptimizer
+            TensorFlow提供了很多种优化器，上面八种是经常用到的。分别是梯度下降法（BGD和SGD）、Adadelta法、Adagrad法（Adrgrad和AdagradDAO）、Momentum法（Momentum和Nesterov Momentum）、Adam、Ftrl法和RMSProp法。
+            3.7.5.1 BGD法
+                BGD的全程是batch gradient descent，即批梯度下降。这种方法是利用先用参数对训练集中的每一个输入生成一个估计输出yi，然后跟实际输出yi比较，统计所有的误差，计算平均误差值，一次作为更新参数的依据。它的迭代过程为:
+                    1 提取训练集中的所有内容{x1,x2,x3...xn}，以及相关的输出yi
+                    2 计算梯度和误差并更新参数
+            3.7.5.2 SGD法
+                stochastic gradient descent，随机梯度下降法。因为这种方法的思想是把数据集拆分成一个一个批次的，随机抽取一个批次来进行计算并更新参数，所以也成为MBGD（minibatch gradient descent）。SGD在每一次迭代计算mini-batch的梯度，然后对参数进行更新，在数据集较大的时候速度较BGD有很大的提升。但是缺点也很明显，由于是随机抽取则需要手动调整学习率，但是选择合适的学习率在训练中是一个比较难做到的事情，同时收敛容易达到局部最优，从而使得在某种情况下被困在鞍点。
+            3.7.5.3 Momentum法
+                Momentum法是模拟物理学中的动量概念，更新时在一定程度上保留更新之前的方向，利用当前的批次再微调本次的更新参数，因此引入了一个新的变量速度v，作为前几次梯度的累加。因此Momentum法能够更新学习率，在下降初期，前后方向一致的时候，能够加速学习，在下降的中后期在局部最小值附近来回震荡的时候，能够抑制震荡，加快收敛。
+            3.7.5.4 Nesterov Momentum法
+                Nesterov Momentum法是由Ilya Sutskever在Nesterov工作的启发下提出的，是对传统的Momentum法的一项改进。
+            3.7.5.5 Adagrad法
+                上面的几种方法都是需要自己来设定学习率，Adagrad法是能够自适应的为各个参数分配不同的学习率，能够控制每个维度的梯度方向。这种方法的有点事能够实现学习率的自动更改，如果本次更新大时，学习率就衰减快一点，如果本次更新梯度小时，学习率就衰减得慢一些。
+            3.7.5.6 Adadelta法
+                Adagrad法仍然存在一些问题，学习率单调递减，在训练的后期学习率很小，并且需要手动的设置一个全局的初始学习率。Adadelta法通过一阶的方法近似模拟二阶牛顿法，解决了这些问题。
+            3.7.5.7 RMSProp法
+                RMSProp法与Momentum法类似，通过引入一个衰减系数，使每一回合都衰减一定比例。在实践中，对循环神经网络（RNN）效果很好。
+            3.7.5.8 Adam法
+                Adam的名称来源于自适应矩估计（adaptive moment estimation）。Adam法根据损失函数针对每个参数的梯度的一阶矩估计和二阶矩估计动态调整每个参数的学习率。
+            3.7.5.9 各种方法的比较
+                通过MNIST数据集的训练测试，发现以下规律
+                    在不怎么调整参数的情况下，Adagrad法要比SGD和Momentum法更稳定，性能更优
+                    精调参数的情况下，精调的SGD和Momentum方法要在收敛速度和准确性上要高于Adagrad法
+
