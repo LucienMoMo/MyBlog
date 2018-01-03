@@ -1,8 +1,7 @@
-# 贡献者：{吴翔 QQ：99456786}
-# tensorflow版本基于0.12
+
 # 源代码出处：
 # 数据集下载地址：{http://yann.lecun.com/exdb/mnist/}
-# 数据集下载到本地后存储的路径："D:\tensorflow\Data_sets\MNIST_data"
+
 '''
 A Convolutional Network implementation example using TensorFlow library.
 This example is using the MNIST database of handwritten digits
