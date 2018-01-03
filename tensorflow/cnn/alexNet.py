@@ -1,12 +1,4 @@
 
-# 源代码出处：
-# 数据集下载地址：{http://yann.lecun.com/exdb/mnist/}
-
-'''
-A Convolutional Network implementation example using TensorFlow library.
-This example is using the MNIST database of handwritten digits
-'''
-
 import tensorflow as tf
 
 # 输入数据
